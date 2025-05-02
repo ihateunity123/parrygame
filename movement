@@ -1,0 +1,155 @@
+using System;
+using System.Runtime.CompilerServices;
+using System.Xml.Schema;
+using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UIElements;
+
+public class Movement : MonoBehaviour
+{
+
+    LayerMask Mask;
+
+    public Transform cameraobj;
+    public Transform character;
+
+    public float sens = 2f;
+    public float Speed = 1f;
+
+    private float CurrentSpeed = 1f;
+    private float slideVal = 2f;
+
+    private float yaw = 0f;
+    private float pitch = 0f;
+
+    private CharacterController CharacterCon;
+
+    private bool HasLanded = false;
+    private bool sliding = false;
+    private bool isGrounded = false;
+
+    private Ray ray;
+
+    private Vector3 velocity = Vector3.zero;
+    private Vector3 movedir = Vector3.zero; 
+    
+    void Start()
+    {
+        CurrentSpeed = Speed;
+
+        UnityEngine.Cursor.lockState = CursorLockMode.Locked;
+        UnityEngine.Cursor.visible = false;
+
+        CharacterCon = GetComponent<CharacterController>();
+
+        Mask = LayerMask.GetMask("Map");
+    }
+
+    // Update is called once per frame
+
+    void FixedUpdate()
+    {
+        if (transform.GetComponent<Player>().Health > 0)
+        {
+            MovementScript();
+        }
+
+    }
+
+    private void MovementScript()
+    {
+
+        float horizontal = Input.GetAxis("Horizontal");
+        float vertical = Input.GetAxis("Vertical");
+
+        yaw += sens * Input.GetAxis("Mouse X");
+        pitch -= sens * Input.GetAxis("Mouse Y");
+        pitch = Mathf.Clamp(pitch, -65, 90);
+
+        character.eulerAngles = new Vector3(pitch, yaw, 0);
+        if (!sliding)
+        {
+            isGrounded = CharacterCon.isGrounded;
+
+            if (Input.GetKey(KeyCode.LeftShift))
+            {
+                if (CurrentSpeed == Speed)
+                {
+                    CurrentSpeed *= 2;
+                }
+
+            }
+            else
+            if (CurrentSpeed == Speed * 2)
+            {
+                CurrentSpeed *= .5f;
+            }
+
+            if (Input.GetKey(KeyCode.Space) && isGrounded)
+            {
+                velocity.y = 10;
+                HasLanded = false;
+            }
+
+            movedir = character.forward * vertical + character.right * horizontal;
+
+            CharacterCon.Move(movedir * CurrentSpeed * Time.deltaTime);
+        }
+
+        if (!HasLanded && isGrounded && velocity.y < 0.1)
+        {
+            HasLanded = true;
+             //sfx
+
+        }
+        if (!isGrounded)
+        {
+            velocity.y += -30f * Time.deltaTime;
+        }
+
+        CharacterCon.Move(velocity * Time.deltaTime);
+
+        if (Input.GetKey(KeyCode.Q))
+        {
+            if (!sliding)
+            {
+                sliding = true;
+                slideVal = 5;
+            }
+
+            if (slideVal != 0 || slideVal < 0)
+            {
+                slideVal -= 5 * Time.deltaTime;
+            }
+            if (slideVal < 0)
+            {
+                slideVal = 0;
+            }
+            if (cameraobj.localPosition != new Vector3(0, 0, .434f))
+            {
+                cameraobj.localPosition = new Vector3(0, 0, .434f);
+            }
+
+            if (Physics.Raycast(character.position, new Vector3(0, -3, 0), out RaycastHit hit))
+            {
+                Vector3 hitNormal = hit.normal;
+                var slopeRotation = Quaternion.FromToRotation(Vector3.up, hitNormal);
+                var slopeVelocity = slopeRotation * new Vector3(hitNormal.x, 0f, hitNormal.z) * .1f;
+                movedir += slopeVelocity;
+
+            }
+
+            
+            CharacterCon.Move(movedir* slideVal / 10);
+        }
+        else
+        {
+            if (cameraobj.localPosition != new Vector3(0, .4f, .434f))
+            {
+                cameraobj.localPosition = new Vector3(0, .4f, .434f);
+            }
+            sliding = false;
+        }
+
+    }
+}
