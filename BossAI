@@ -1,0 +1,18 @@
+using UnityEngine;
+
+public class BossAI : MonoBehaviour
+{
+    public Transform Character;
+
+    void Start()
+    {
+        
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        transform.LookAt(Character);
+        transform.rotation *= Quaternion.Euler(0,180,0);   
+    }
+}
