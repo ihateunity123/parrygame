@@ -1,0 +1,86 @@
+using System.Collections;
+using UnityEngine;
+using UnityEngine.TextCore.Text;
+
+public class Boolet : MonoBehaviour
+{
+    private float Cooldown = 0;
+    private float Distance = .3f;
+    public Transform Char;
+    void Start()
+    {
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+
+        if (Cooldown > 0)
+        {
+            Cooldown -= Time.deltaTime;
+        }
+
+        if (Cooldown <= 0)
+        {
+            Cooldown = .05f;
+
+            if (transform.tag == "Shooting")
+            {
+                if (Physics.Raycast(transform.position, -transform.forward, out RaycastHit hitInfo, Distance))
+                {
+                    if (hitInfo.collider.CompareTag("Enemy") && hitInfo.transform.parent != null && hitInfo.transform.parent.GetComponent<Enemy>())
+                    {
+                        hitInfo.transform.parent.GetComponent<Enemy>().AdjustHealth(10);
+                    }
+
+                    if (transform.tag == "Shooting" && hitInfo.collider.CompareTag("Player"))
+                    {
+                        hitInfo.transform.GetComponent<Player>().AdjustHealth(10);
+                        Destroy(transform.gameObject);
+                        Destroy(GetComponent<Boolet>());
+                    }
+
+                }
+            }
+            else 
+            if (transform.tag == "Bounce")
+            {
+                Collider[] hitColliders = Physics.OverlapBox(transform.position, transform.localScale * 2, Quaternion.identity);
+
+                for (int i = 0; i < hitColliders.Length; i++)
+                {
+                    Debug.Log(hitColliders[i].transform.tag);
+                    if (hitColliders[i].transform.tag == "Shooting")
+                    {
+                        Transform bullet = hitColliders[i].transform;
+                        bullet.tag = "Bounce";
+                        bullet.rotation = Quaternion.LookRotation(-transform.forward);
+                    }
+                    if (hitColliders[i].transform.tag == "Enemy")
+                    {
+                        hitColliders[i].transform.parent.gameObject.GetComponent<Enemy>().AdjustHealth(10);
+                        Destroy(transform.gameObject);
+                        Destroy(GetComponent<Boolet>());
+                    }
+
+                }
+
+            }
+
+        }
+
+        if (transform.tag == "Shooting")
+        {
+            transform.position += -transform.forward * -10f * Time.deltaTime;
+        }
+        if (transform.tag == "Bounce")
+        {
+            transform.position += -transform.forward * 10f * Time.deltaTime;
+        }
+
+        if ((Char.position - transform.position).magnitude >= 50) {
+            Destroy(transform.gameObject);
+        }
+
+    }
+}
