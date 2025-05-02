@@ -1,0 +1,82 @@
+using System.Collections;
+using System.Runtime.CompilerServices;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.TextCore.Text;
+public class CombatMechanic : MonoBehaviour
+{
+    public Transform Hitbox;
+    public CharacterController CharacterController;
+    public Transform CameraPart;
+    public Camera Camera;
+    private Vector3 OriginalPos;
+    private float shaketime = 0;
+    private float timer = 0f;
+    private float Elapsed = 0;
+    private bool ParryCD = false;
+    private Vector3 savedVel;
+    void Start()
+    {
+        OriginalPos = CameraPart.localPosition;
+    }
+    void FixedUpdate()
+    {
+        if (transform.GetComponent<Player>().Health > 0)
+        {
+            if (Input.GetKey(KeyCode.F) && !ParryCD)
+            {
+                Collider[] hitColliders = Physics.OverlapBox(Hitbox.position, Hitbox.localScale, Quaternion.identity);
+
+                for (int i = 0; i < hitColliders.Length; i++)
+                {
+                    if (hitColliders[i].transform.tag == "Shooting")
+                    {
+                        Transform bullet = hitColliders[i].transform;
+                        bullet.tag = "Bounce";
+                        bullet.transform.rotation = Quaternion.LookRotation(-transform.forward);
+                        shaketime = .1f;
+                    }
+
+                }
+
+                ParryCD = true;
+                if (CharacterController.velocity.magnitude >= 5 && Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, 3))
+                {
+                    if (hit.transform.tag != "Enemy")
+                    {
+                        savedVel = new Vector3(-CharacterController.velocity.x, 10, -CharacterController.velocity.z) * 2;
+                        transform.GetComponent<Abilities>().ResetElapsed();
+                        Elapsed = 3;
+                        shaketime = .1f;
+                    }
+                }
+            }
+
+            if (Elapsed > 0)
+            {
+                Elapsed -= 5 * Time.deltaTime;
+                CharacterController.Move(savedVel * Elapsed * Time.deltaTime);
+            }
+            if (ParryCD)
+            {
+                timer += Time.deltaTime;
+                if (timer >= .1f)
+                {
+                    ParryCD = false;
+                }
+
+            }
+            if (shaketime > 0)
+            {
+                CameraPart.localPosition += Random.insideUnitSphere * .2f;
+                shaketime -= Time.deltaTime;
+            }
+            else
+        if (shaketime < 0 && CameraPart.localPosition != OriginalPos)
+            {
+                CameraPart.localPosition = OriginalPos;
+            }
+        }
+    }
+
+}
