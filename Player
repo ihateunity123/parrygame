@@ -1,0 +1,33 @@
+using System.Collections;
+using UnityEngine;
+
+public class Player : MonoBehaviour
+{
+    public Transform Character;
+    public Transform Enemy;
+    public float Health;
+    private bool Dead = false;
+    public void AdjustHealth(float Damage)
+    {
+        Health -= Damage;
+        if (Health < 0)
+        {
+            Dead = true;
+        }
+    }
+
+    public void Update() {
+        if (Dead)
+        {
+            if (Input.GetMouseButtonDown(0)) {
+                Health = 200;
+                Character.position = new Vector3(-2.5f,2.32f,-10);
+                Enemy.GetComponent<Enemy>().Health = 500;
+                Enemy.position = new Vector3(2, 4, 8);
+            }
+        }
+     }
+
+
+}
+
