@@ -1,0 +1,113 @@
+using System;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
+using UnityEngine;
+
+public class Abilities : MonoBehaviour
+{
+    private CharacterController characterController;
+    private float DashElapsed = 0;
+    private float JumpElapsed = 0;
+    private float BlackflashElapsed = 0;
+    private bool BlackFlash = false;
+    private bool CDG = false;
+    private bool SJump = false;
+    void Start()
+    {
+        characterController = transform.GetComponent<CharacterController>();
+    }
+    public void ResetElapsed()
+    {
+        DashElapsed = -1;
+        JumpElapsed = -1;
+        if (CDG)
+        {
+            CDG = false;
+        }
+        if (SJump)
+        {
+            SJump = false;
+        }
+    }
+
+    // Update is called once per frame
+
+    void Update()
+    {
+
+        if (Input.GetKeyDown(KeyCode.E) && !CDG)
+        {
+            CDG = true;
+            DashElapsed = 1;
+        }
+        if (Input.GetKeyDown(KeyCode.R) && !SJump)
+        {
+            SJump = true;
+            JumpElapsed = 1;
+        }
+        if (CDG && DashElapsed > 0)
+        {
+            Collider[] hitColliders = Physics.OverlapBox(transform.position + new Vector3(0,0,-3), new Vector3(4,3,6), Quaternion.identity);
+
+            for (int i = 0; i < hitColliders.Length; i++)
+            {
+                Transform CollidedObject = hitColliders[i].transform;
+                if (CollidedObject.tag == "Shooting")
+                {
+                    CollidedObject.tag = "Bounce";
+                    CollidedObject.rotation = Quaternion.LookRotation(-transform.forward);
+                }
+                if (CollidedObject.CompareTag("Enemy") && CollidedObject.parent != null && CollidedObject.parent.GetComponent<Enemy>())
+                {
+                    CollidedObject.parent.GetComponent<Enemy>().AdjustHealth(10);
+                }
+            }
+            DashElapsed -= Time.deltaTime;
+            characterController.Move(transform.forward * DashElapsed * 20 * Time.deltaTime);
+            if (DashElapsed <= 0)
+            {
+                CDG = false;
+            }
+        }
+
+        if (SJump && JumpElapsed > 0)
+        {
+            JumpElapsed -= Time.deltaTime;
+            characterController.Move(new Vector3(0, 10, 0) * JumpElapsed * 3 * Time.deltaTime);
+            if (JumpElapsed <= 0)
+            {
+                JumpElapsed = 0;
+                SJump = false;
+            }
+        }
+
+        if (!BlackFlash)
+        {
+            Collider[] hitColliders = Physics.OverlapBox(transform.position + new Vector3(0, 0, -2), new Vector3(3, 4, 4), Quaternion.identity);
+
+            for (int i = 0; i < hitColliders.Length; i++)
+            {
+                Transform CollidedObject = hitColliders[i].transform;
+                if (CollidedObject.CompareTag("Enemy") && CollidedObject.parent != null && CollidedObject.parent.GetComponent<Enemy>())
+                {
+                    CollidedObject.parent.GetComponent<Enemy>().AdjustHealth(50);
+
+                    if (CollidedObject.parent.GetComponent<Rigidbody>())
+                    {
+                        CollidedObject.parent.GetComponent<Rigidbody>().AddForce(transform.forward);
+                    }
+                }
+            }
+        }
+        else
+        {
+            if (BlackflashElapsed <= 3)
+                BlackflashElapsed -= Time.deltaTime;
+
+                if (BlackflashElapsed <= 0)
+                {
+                    BlackFlash = true;
+                }
+            }
+    }
+}
