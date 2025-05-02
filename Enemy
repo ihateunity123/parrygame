@@ -1,0 +1,73 @@
+using System.Collections;
+using UnityEngine;
+
+public class Enemy : MonoBehaviour
+{
+    public Transform Bullet;
+    public Transform head;
+    public Transform Character;
+    private float elapsed;
+    public float Health;
+    public ParticleSystem ParticleSystem;
+    private IEnumerator Stuff(Transform hit)
+    {
+        if (Health < 0)
+        {
+            ParticleSystem NewParticle = Instantiate(ParticleSystem, transform.position, transform.rotation);
+            NewParticle.startColor = transform.GetComponent<Material>().color;
+            NewParticle.Emit(10);
+            Destroy(hit.gameObject);
+        }
+        for (int i = 0; i < hit.childCount; i++)
+        {
+            hit.GetChild(i).transform.GetComponent<Renderer>().material.EnableKeyword("_EMISSION");
+            Debug.Log(hit.GetChild(i).transform.name);
+        }
+        yield return new WaitForSeconds(.15f);
+        for (int i = 0; i < hit.childCount; i++)
+        {
+            hit.GetChild(i).transform.GetComponent<Renderer>().material.DisableKeyword("_EMISSION");
+        }
+    }
+    public void AdjustHealth(float Damage)
+    {
+        Health -= Damage;
+        Stuff(transform);
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (Bullet != null)
+        {
+            elapsed += Time.deltaTime;
+            if (transform.parent.parent.parent.GetComponent<Enemy>().Health <= 250)
+            {
+                if (elapsed >= .5)
+                {
+                    elapsed = 0;
+                    Transform bullet;
+                    bullet = Instantiate(Bullet, head.position + new Vector3(0, 0, -1), transform.rotation);
+                    bullet.LookAt(Character);
+                    bullet.GetComponent<Boolet>().enabled = true;
+                    bullet.tag = "Shooting";
+                }
+            }
+            else
+            if (elapsed >= 1)
+                {
+                    elapsed = 0;
+                    Transform bullet;
+                    bullet = Instantiate(Bullet, head.position + new Vector3(0, 0, -1), transform.rotation);
+                    bullet.LookAt(Character);
+                    bullet.GetComponent<Boolet>().enabled = true;
+                    bullet.tag = "Shooting";
+                }
+
+        }
+
+    }
+
+
+}
+
